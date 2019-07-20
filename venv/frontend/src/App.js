@@ -1,146 +1,111 @@
-// frontend/src/App.js
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 
- import React, { Component } from "react";
- import Modal from "./components/Modal";
- import axios from "axios";
+import { Dialog, DialogActionsBar } from '@progress/kendo-react-dialogs';
+import { Input } from '@progress/kendo-react-inputs';
+import { Button } from '@progress/kendo-react-buttons';
+import { Ripple } from '@progress/kendo-react-ripple';
+import { savePDF } from '@progress/kendo-react-pdf';
 
- class App extends Component {
-   constructor(props) {
-     super(props);
-     this.state = {
-       viewCompleted: false,
-       activeItem: {
-         title: "",
-         description: "",
-         completed: false
-       },
-       blogList: []
-     };
-   }
-   componentDidMount() {
-     this.refreshList();
-   }
-   refreshList = () => {
-     axios
-       .get("http://localhost:8000/api/blogs/")
-       .then(res => this.setState({ blogList: res.data }))
-       .catch(err => console.log(err));
-   };
-   displayCompleted = status => {
-     if (status) {
-       return this.setState({ viewCompleted: true });
-     }
-     return this.setState({ viewCompleted: false });
-   };
-   renderTabList = () => {
-     return (
-       <div className="my-5 tab-list">
-         <span
-           onClick={() => this.displayCompleted(true)}
-           className={this.state.viewCompleted ? "active" : ""}
-         >
-           complete
-         </span>
-         <span
-           onClick={() => this.displayCompleted(false)}
-           className={this.state.viewCompleted ? "" : "active"}
-         >
-           Incomplete
-         </span>
-       </div>
-     );
-   };
-   renderItems = () => {
-     const { viewCompleted } = this.state;
-     const newItems = this.state.blogList.filter(
-       item => item.completed === viewCompleted
-     );
-     return newItems.map(item => (
-       <li
-         key={item.id}
-         className="list-group-item d-flex justify-content-between align-items-center"
-       >
-         <span
-           className={`blog-title mr-2 ${
-             this.state.viewCompleted ? "completed-blog" : ""
-           }`}
-           title={item.description}
-         >
-           {item.title}
-         </span>
-         <span>
-           <button
-             onClick={() => this.editItem(item)}
-             className="btn btn-secondary mr-2"
-           >
-             {" "}
-             Edit{" "}
-           </button>
-           <button
-             onClick={() => this.handleDelete(item)}
-             className="btn btn-danger"
-           >
-             Delete{" "}
-           </button>
-         </span>
-       </li>
-     ));
-   };
-   toggle = () => {
-     this.setState({ modal: !this.state.modal });
-   };
-   handleSubmit = item => {
-     this.toggle();
-     if (item.id) {
-       axios
-         .put(`http://localhost:8000/api/blogs/${item.id}/`, item)
-         .then(res => this.refreshList());
-       return;
-     }
-     axios
-       .post("http://localhost:8000/api/blogs/", item)
-       .then(res => this.refreshList());
-   };
-   handleDelete = item => {
-     axios
-       .delete(`http://localhost:8000/api/blogs/${item.id}`)
-       .then(res => this.refreshList());
-   };
-   createItem = () => {
-     const item = { title: "", description: "", completed: false };
-     this.setState({ activeItem: item, modal: !this.state.modal });
-   };
-   editItem = item => {
-     this.setState({ activeItem: item, modal: !this.state.modal });
-   };
-   render() {
-     return (
-       <main className="content">
-         <h1 className="text-white text-uppercase text-center my-4">Blog app</h1>
-         <div className="row ">
-           <div className="col-md-6 col-sm-10 mx-auto p-0">
-             <div className="card p-3">
-               <div className="">
-                 <button onClick={this.createItem} className="btn btn-primary">
-                   Add task
-                 </button>
-               </div>
-               {this.renderTabList()}
-               <ul className="list-group list-group-flush">
-                 {this.renderItems()}
-               </ul>
-             </div>
-           </div>
-         </div>
-         {this.state.modal ? (
-           <Modal
-             activeItem={this.state.activeItem}
-             toggle={this.toggle}
-             onSave={this.handleSubmit}
-           />
-         ) : null}
-       </main>
-     );
-   }
- }
- export default App;
+import { DonutChartContainer } from './components/DonutChartContainer';
+import { BarChartContainer } from './components/BarChartContainer';
+import { GridContainer } from './components/GridContainer';
+import { PanelBarContainer } from './components/PanelBarContainer';
+
+import '@progress/kendo-theme-material/dist/all.css';
+import './App.css';
+import 'bootstrap-4-grid/css/grid.min.css';
+
+// xs (phones), sm (tablets), md (desktops), lg (larger desktops)
+// Ripple adds like fading to buttons when they are clicked
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.appCountainer = React.createRef();
+    this.state = {
+      showDialog: false
+    }
+  }
+
+  handlePDFExport = () => {
+    savePDF(ReactDOM.findDOMNode(this.appContainer), { paperSize: 'auto'});
+  }
+
+  handleShare = () => {
+    this.setState({
+      showDialog: !this.state.showDialog
+    }, () => console.log(this.state))
+  }
+
+  render() {
+    return (
+      <Ripple>
+        <div className="bootstrap-wrapper">
+          <div className="app-container container" ref={(el) => this.appContainer = el}>
+            <div className="row">
+              <div className="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                <h1>Sales | Q4 2018</h1>
+              </div>
+              <div className="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6 buttons-right">
+                <Button primary={true} onClick={this.handleShare}>Share</Button>
+                <Button onClick={this.handlePDFExport}>Export to PDF</Button>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-xs-3 col-sm-3 col-md-3 col-lg-3 col-xl-3">
+                <PanelBarContainer />
+              </div>
+              <div className="col-xs-9 col-sm-9 col-md-9 col-lg-9 col-xl-9">
+                <div className="row">
+                  <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4 col-xl-4">
+                    <DonutChartContainer />
+                  </div>
+                  <div className="col-xs-6 col-sm-6 col-md-2 col-lg-2 col-xl-2">
+                    <div className="percentage-container">
+                      <span className="percentage-number">94</span>
+                      <span className="percentage-sign">%</span>
+                      <p>CUSTOMER SATISFACTION</p>
+                    </div>
+                    <div className="percentage-container">
+                      <span className="percentage-number">89</span>
+                      <span className="percentage-sign">%</span>
+                      <p>TARGET SALES</p>
+                    </div>
+                  </div>
+                  <div className="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                    <BarChartContainer />
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                    <GridContainer />
+                  </div>
+                </div>
+              </div>
+
+              <div className="row">
+                <div className="col-xs-18 col-sm-18 col-md-18 col-lg-18 col-xl-18">
+                  <GridContainer />
+                </div>
+              </div>
+
+            </div>
+            {this.state.showDialog &&
+              <Dialog title={"Share this report"} onClose={this.handleShare}>
+                <p>Please enter the email address/es of the recipient/s.</p>
+                <Input placeholder="example@progress.com" />
+                <DialogActionsBar>
+                  <Button primary={true} onClick={this.handleShare}>Share</Button>
+                  <Button onClick={this.handleShare}>Cancel</Button>
+                </DialogActionsBar>
+              </Dialog>
+            }
+          </div>
+        </div>
+      </Ripple>
+    );
+  }
+}
+
+export default App;
